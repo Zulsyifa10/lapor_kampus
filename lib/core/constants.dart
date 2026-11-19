@@ -111,15 +111,15 @@ class CampusLocation {
 
   /// Silakan sesuaikan dengan nama gedung di kampus kalian.
   static const List<String> buildings = [
-    'Gedung A (Rektorat)',
-    'Gedung B (Perkuliahan)',
-    'Gedung C (Laboratorium)',
-    'Gedung D (Fakultas)',
+    'Gedung A',
+    'Gedung B',
+    'Gedung C',
     'Perpustakaan',
-    'Masjid / Musala',
+    'Masjid',
     'Kantin',
-    'Gedung Olahraga',
     'Area Parkir',
+    'Pos Satpam',
+    'Medical Center',
     'Lainnya',
   ];
 }
