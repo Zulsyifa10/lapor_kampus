@@ -1,0 +1,66 @@
+// Firestore Security Rules - LaporKampus
+// Penanggung jawab: Nad
+// Cara pakai: Firebase Console > Firestore Database > Rules > tempel isi file ini > Publish.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ---------- Koleksi users ----------
+    match /users/{uid} {
+      allow read: if signedIn();
+      // Pendaftaran: pengguna hanya boleh membuat dokumennya sendiri dengan role mahasiswa.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role == 'mahasiswa';
+      // Edit profil: tidak boleh mengubah role sendiri (role admin diatur dari Firebase Console).
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    // ---------- Koleksi reports ----------
+    match /reports/{reportId} {
+      allow read: if signedIn();
+
+      // Membuat laporan baru: pelapor = user yang login, status awal 'menunggu'.
+      allow create: if signedIn()
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.status == 'menunggu'
+        && request.resource.data.supporters.size() == 0
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 5;
+
+      allow update: if
+        // 1) Petugas/admin boleh mengubah status, tanggapan, dan riwayat.
+        isAdmin()
+        // 2) Pelapor boleh mengedit isi laporannya selama masih 'menunggu'.
+        || (signedIn()
+            && resource.data.reporterId == request.auth.uid
+            && resource.data.status == 'menunggu'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['title', 'description', 'category', 'location',
+                           'room', 'urgency', 'imageBase64', 'updatedAt']))
+        // 3) Semua pengguna boleh memberi/mencabut dukungan ("Saya juga mengalami").
+        || (signedIn()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['supporters']));
+
+      // Hapus: admin, atau pelapor selama laporan masih 'menunggu'.
+      allow delete: if isAdmin()
+        || (signedIn()
+            && resource.data.reporterId == request.auth.uid
+            && resource.data.status == 'menunggu');
+    }
+  }
+}
