@@ -1,7 +1,7 @@
 // lib/screens/home/home_screen.dart
 // Penanggung jawab: Nad
-// VERSI MINGGU 2: daftar laporan real-time + pencarian + filter status.
-// (Filter kategori & urutan ditambahkan minggu 3.)
+// Beranda: daftar semua laporan secara real-time + pencarian, filter status,
+// filter kategori, dan pengurutan (terbaru / paling didukung).
 
 import 'package:flutter/material.dart';
 
@@ -14,6 +14,8 @@ import '../../services/report_service.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/report_card.dart';
 import '../report/report_detail_screen.dart';
+
+enum _SortMode { terbaru, palingDidukung }
 
 class HomeScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -30,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _query = '';
   String? _statusFilter;
+  String? _categoryFilter;
+  _SortMode _sort = _SortMode.terbaru;
 
   @override
   void dispose() {
@@ -46,8 +50,14 @@ class _HomeScreenState extends State<HomeScreen> {
           r.location.toLowerCase().contains(q) ||
           r.room.toLowerCase().contains(q);
       final matchStatus = _statusFilter == null || r.status == _statusFilter;
-      return matchQuery && matchStatus;
+      final matchCategory =
+          _categoryFilter == null || r.category == _categoryFilter;
+      return matchQuery && matchStatus && matchCategory;
     }).toList();
+
+    if (_sort == _SortMode.palingDidukung) {
+      result.sort((a, b) => b.supportCount.compareTo(a.supportCount));
+    }
     return result;
   }
 
@@ -61,6 +71,38 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickCategory() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.all_inclusive),
+                title: const Text('Semua kategori'),
+                selected: _categoryFilter == null,
+                onTap: () => Navigator.pop(ctx, ''),
+              ),
+              for (final c in ReportCategory.values)
+                ListTile(
+                  leading: Icon(ReportCategory.icon(c)),
+                  title: Text(c),
+                  selected: _categoryFilter == c,
+                  onTap: () => Navigator.pop(ctx, c),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (selected == null) return; // ditutup tanpa memilih
+    setState(() => _categoryFilter = selected.isEmpty ? null : selected);
   }
 
   @override
@@ -77,6 +119,33 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Filter kategori',
+            icon: Badge(
+              isLabelVisible: _categoryFilter != null,
+              smallSize: 8,
+              child: const Icon(Icons.filter_list),
+            ),
+            onPressed: _pickCategory,
+          ),
+          PopupMenuButton<_SortMode>(
+            tooltip: 'Urutkan',
+            icon: const Icon(Icons.sort),
+            initialValue: _sort,
+            onSelected: (v) => setState(() => _sort = v),
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: _SortMode.terbaru,
+                child: Text('Terbaru'),
+              ),
+              PopupMenuItem(
+                value: _SortMode.palingDidukung,
+                child: Text('Paling banyak didukung'),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -113,6 +182,18 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          if (_categoryFilter != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InputChip(
+                  avatar: Icon(ReportCategory.icon(_categoryFilter!), size: 18),
+                  label: Text(_categoryFilter!),
+                  onDeleted: () => setState(() => _categoryFilter = null),
+                ),
+              ),
+            ),
           const SizedBox(height: 4),
           Expanded(
             child: StreamBuilder<List<Report>>(
