@@ -1,6 +1,6 @@
 // lib/screens/report/create_report_screen.dart
 // Penanggung jawab: Tik
-// VERSI MINGGU 2: form membuat laporan baru (mode edit ditambahkan minggu 3).
+// Form membuat laporan baru sekaligus mengedit laporan (jika [existing] diisi).
 
 import 'package:flutter/material.dart';
 
@@ -8,14 +8,20 @@ import '../../core/constants.dart';
 import '../../core/ui_helpers.dart';
 import '../../core/validators.dart';
 import '../../models/app_user.dart';
+import '../../models/report.dart';
 import '../../services/auth_service.dart';
 import '../../services/report_service.dart';
 import '../../widgets/image_picker_field.dart';
 
 class CreateReportScreen extends StatefulWidget {
   final AppUser currentUser;
+  final Report? existing;
 
-  const CreateReportScreen({super.key, required this.currentUser});
+  const CreateReportScreen({
+    super.key,
+    required this.currentUser,
+    this.existing,
+  });
 
   @override
   State<CreateReportScreen> createState() => _CreateReportScreenState();
@@ -33,12 +39,22 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   String? _imageBase64;
   bool _saving = false;
 
+  bool get _isEdit => widget.existing != null;
+
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController();
-    _roomController = TextEditingController();
-    _descController = TextEditingController();
+    final r = widget.existing;
+    _titleController = TextEditingController(text: r?.title ?? '');
+    _roomController = TextEditingController(text: r?.room ?? '');
+    _descController = TextEditingController(text: r?.description ?? '');
+    if (r != null) {
+      _category = ReportCategory.values.contains(r.category) ? r.category : null;
+      _location =
+          CampusLocation.buildings.contains(r.location) ? r.location : null;
+      _urgency = r.urgency;
+      _imageBase64 = r.imageBase64;
+    }
   }
 
   @override
@@ -55,18 +71,37 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
 
     setState(() => _saving = true);
     try {
-      await ReportService.instance.createReport(
-        reporter: widget.currentUser,
-        title: _titleController.text,
-        description: _descController.text,
-        category: _category!,
-        location: _location!,
-        room: _roomController.text,
-        urgency: _urgency,
-        imageBase64: _imageBase64,
-      );
+      final service = ReportService.instance;
+      if (_isEdit) {
+        await service.updateReport(
+          widget.existing!.id,
+          title: _titleController.text,
+          description: _descController.text,
+          category: _category!,
+          location: _location!,
+          room: _roomController.text,
+          urgency: _urgency,
+          imageBase64: _imageBase64,
+        );
+      } else {
+        await service.createReport(
+          reporter: widget.currentUser,
+          title: _titleController.text,
+          description: _descController.text,
+          category: _category!,
+          location: _location!,
+          room: _roomController.text,
+          urgency: _urgency,
+          imageBase64: _imageBase64,
+        );
+      }
       if (!mounted) return;
-      UiHelpers.showSnack(context, 'Laporan berhasil dikirim. Terima kasih!');
+      UiHelpers.showSnack(
+        context,
+        _isEdit
+            ? 'Laporan berhasil diperbarui.'
+            : 'Laporan berhasil dikirim. Terima kasih!',
+      );
       Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
@@ -85,7 +120,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Buat Laporan'),
+        title: Text(_isEdit ? 'Edit Laporan' : 'Buat Laporan'),
       ),
       body: Form(
         key: _formKey,
@@ -195,8 +230,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2.5, color: Colors.white),
                     )
-                  : const Icon(Icons.send_outlined),
-              label: const Text('Kirim Laporan'),
+                  : Icon(_isEdit ? Icons.save_outlined : Icons.send_outlined),
+              label: Text(_isEdit ? 'Simpan Perubahan' : 'Kirim Laporan'),
             ),
             const SizedBox(height: 24),
           ],

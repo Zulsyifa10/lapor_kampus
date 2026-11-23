@@ -1,6 +1,5 @@
 // lib/services/report_service.dart
 // Penanggung jawab: Tik
-// VERSI MINGGU 2 (Tik): baca + simpan laporan
 // Semua akses ke koleksi Firestore `reports` ada di file ini.
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -78,5 +77,66 @@ class ReportService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
     return doc.id;
+  }
+
+  Future<void> updateReport(
+    String id, {
+    required String title,
+    required String description,
+    required String category,
+    required String location,
+    required String room,
+    required String urgency,
+    String? imageBase64,
+  }) {
+    return _col.doc(id).update({
+      'title': title.trim(),
+      'description': description.trim(),
+      'category': category,
+      'location': location,
+      'room': room.trim(),
+      'urgency': urgency,
+      'imageBase64': imageBase64,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> deleteReport(String id) => _col.doc(id).delete();
+
+  // ============ Dukungan & perubahan status ============
+
+  /// "Saya juga mengalami" — menambah/menghapus uid dari daftar pendukung.
+  Future<void> toggleSupport(Report report, String uid) {
+    final alreadySupported = report.isSupportedBy(uid);
+    return _col.doc(report.id).update({
+      'supporters': alreadySupported
+          ? FieldValue.arrayRemove([uid])
+          : FieldValue.arrayUnion([uid]),
+    });
+  }
+
+  /// Dipakai petugas/admin untuk mengubah status + memberi tanggapan.
+  Future<void> updateStatus({
+    required String reportId,
+    required String newStatus,
+    required String note,
+    required AppUser admin,
+  }) {
+    final cleanNote = note.trim();
+    final log = StatusLog(
+      status: newStatus,
+      note: cleanNote.isEmpty
+          ? 'Status diubah menjadi ${ReportStatus.label(newStatus)}.'
+          : cleanNote,
+      byName: admin.name,
+      at: DateTime.now(),
+    );
+
+    return _col.doc(reportId).update({
+      'status': newStatus,
+      if (cleanNote.isNotEmpty) 'adminNote': cleanNote,
+      'history': FieldValue.arrayUnion([log.toMap()]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 }
