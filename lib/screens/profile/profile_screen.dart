@@ -47,13 +47,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 validator: (v) => Validators.minLength(v, 3, 'Nama'),
                 decoration: const InputDecoration(labelText: 'Nama lengkap'),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: nimController,
-                keyboardType: TextInputType.number,
-                validator: Validators.nim,
-                decoration: const InputDecoration(labelText: 'NIM'),
-              ),
+              // Akun admin (petugas) tidak memakai NIM.
+              if (!user.isAdmin) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: nimController,
+                  keyboardType: TextInputType.text,
+                  textCapitalization: TextCapitalization.characters,
+                  validator: Validators.nim,
+                  decoration: const InputDecoration(labelText: 'NIM'),
+                ),
+              ],
             ],
           ),
         ),
@@ -188,11 +192,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           _MenuCard(
             children: [
-              ListTile(
-                leading: const Icon(Icons.badge_outlined),
-                title: const Text('NIM'),
-                subtitle: Text(user.nim.isEmpty ? '-' : user.nim),
-              ),
+              // NIM hanya ditampilkan untuk mahasiswa, tidak untuk admin.
+              if (!user.isAdmin)
+                ListTile(
+                  leading: const Icon(Icons.badge_outlined),
+                  title: const Text('NIM'),
+                  subtitle: Text(user.nim.isEmpty ? '-' : user.nim),
+                ),
               ListTile(
                 leading: const Icon(Icons.email_outlined),
                 title: const Text('Email'),

@@ -11,12 +11,13 @@ Perangkat uji: `[isi, mis. Xiaomi Redmi Note 12 – Android 14 / Emulator Pixel 
 |----|-------|----------|-----------------------|---------|-------|
 | A01 | Daftar | Isi semua data valid lalu tekan **Daftar** | Akun dibuat, dokumen `users/{uid}` muncul di Firestore, masuk ke Beranda | Atikah | |
 | A02 | Daftar | Email sudah terdaftar | Muncul pesan "Email sudah terdaftar" | Atikah | |
-| A03 | Daftar | NIM berisi huruf / sandi < 6 karakter / konfirmasi beda | Muncul pesan validasi di bawah kolom | Atikah | |
+| A03 | Daftar | NIM berisi simbol / sandi < 6 karakter / konfirmasi beda | Muncul pesan validasi di bawah kolom | Atikah | |
 | A04 | Login | Email & sandi benar | Masuk ke Beranda | Jinan | |
 | A05 | Login | Sandi salah | Muncul "Email atau kata sandi salah" | Jinan | |
 | A06 | Lupa sandi | Masukkan email terdaftar | Email reset terkirim, muncul notifikasi | Jinan | |
 | A07 | Profil | Edit nama & NIM | Data berubah di Profil dan Firestore | Atikah | |
 | A08 | Logout | Tekan Keluar → konfirmasi | Kembali ke halaman Login | Atikah | |
+| A09 | Daftar | NIM berisi huruf dan angka (mis. 22A10001) | Diterima, akun berhasil dibuat | Nadhira | |
 | B01 | Buat laporan | Isi form lengkap + foto galeri → Kirim | Laporan tersimpan status *Menunggu*, muncul di Beranda & Laporan Saya | Nadhira | |
 | B02 | Buat laporan | Ambil foto dari kamera | Foto tampil di pratinjau dan di detail | Nadhira | |
 | B03 | Buat laporan | Judul < 5 karakter / kategori kosong / deskripsi < 10 | Form tidak terkirim, pesan validasi muncul | Nadhira | |
@@ -35,12 +36,13 @@ Perangkat uji: `[isi, mis. Xiaomi Redmi Note 12 – Android 14 / Emulator Pixel 
 | D03 | Ubah status | Admin ubah ke *Selesai* | Laporan pindah ke tab Riwayat milik pelapor | Nadhira | |
 | D04 | Dashboard | Buka Dashboard Petugas | Angka total/per status/per kategori sesuai data Firestore | Atikah | |
 | D05 | Rules | Mahasiswa mencoba ubah `role` sendiri lewat Rules Playground | Ditolak (permission-denied) | Atikah | |
+| D06 | Profil admin | Buka Profil dan Edit Profil dengan akun admin | Kolom NIM tidak tampil | Nadhira | |
 
 ## B. Unit Test (`flutter test`)
 
 | File | Jumlah Test | Penanggung Jawab | Hasil |
 |------|-------------|------------------|-------|
-| `test/validators_test.dart` | 11 | Nadhira | |
+| `test/validators_test.dart` | 12 | Nadhira | |
 | `test/report_model_test.dart` | 5 | Atikah | |
 | `test/ui_helpers_test.dart` | 8 | Jinan | |
 

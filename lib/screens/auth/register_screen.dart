@@ -87,7 +87,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _nimController,
-                  keyboardType: TextInputType.number,
+                  keyboardType: TextInputType.text,
+                  textCapitalization: TextCapitalization.characters,
                   textInputAction: TextInputAction.next,
                   validator: Validators.nim,
                   decoration: const InputDecoration(

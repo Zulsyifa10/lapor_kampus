@@ -33,8 +33,12 @@ void main() {
   });
 
   group('Validators.nim', () {
-    test('mengandung huruf ditolak', () {
-      expect(Validators.nim('22A10001'), isNotNull);
+    test('mengandung huruf diterima', () {
+      expect(Validators.nim('22A10001'), isNull);
+    });
+    test('mengandung simbol atau spasi ditolak', () {
+      expect(Validators.nim('2210-511001'), isNotNull);
+      expect(Validators.nim('2210 511001'), isNotNull);
     });
     test('terlalu pendek ditolak', () {
       expect(Validators.nim('12345'), isNotNull);

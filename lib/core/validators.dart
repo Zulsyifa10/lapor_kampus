@@ -7,7 +7,7 @@ class Validators {
 
   static final RegExp _emailRegex =
       RegExp(r'^[\w.+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$');
-  static final RegExp _digitsOnly = RegExp(r'^\d+$');
+  static final RegExp _alphanumeric = RegExp(r'^[A-Za-z0-9]+$');
 
   static String? required(String? value, [String field = 'Kolom ini']) {
     if (value == null || value.trim().isEmpty) return '$field wajib diisi';
@@ -37,8 +37,10 @@ class Validators {
     final empty = required(value, 'NIM');
     if (empty != null) return empty;
     final v = value!.trim();
-    if (!_digitsOnly.hasMatch(v)) return 'NIM hanya boleh berisi angka';
-    if (v.length < 8 || v.length > 15) return 'NIM harus 8–15 digit';
+    if (!_alphanumeric.hasMatch(v)) {
+      return 'NIM hanya boleh berisi huruf dan angka';
+    }
+    if (v.length < 8 || v.length > 15) return 'NIM harus 8–15 karakter';
     return null;
   }
 
